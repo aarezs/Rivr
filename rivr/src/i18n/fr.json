@@ -1,0 +1,112 @@
+{
+  "app": {
+    "title": "Rivr",
+    "tagline": "Vous diriger vers les bons soins.",
+    "disclaimer": "Rivr est un outil de pré-évaluation alimenté par l'IA et ne fournit pas de diagnostics médicaux. Consultez toujours un professionnel de la santé. En cas d'urgence, composez le 911.",
+    "loading": "Chargement...",
+    "continue": "Continuer",
+    "back": "Retour",
+    "download": "Télécharger",
+    "close": "Fermer",
+    "getDirections": "Itinéraire",
+    "startOver": "Recommencer"
+  },
+  "language": {
+    "title": "Bienvenue à Rivr",
+    "subtitle": "Choisissez votre langue préférée",
+    "select": "Sélectionner la langue"
+  },
+  "vitals": {
+    "title": "Scan des Signes Vitaux",
+    "subtitle": "Gardez votre visage stable devant la caméra",
+    "instruction": "Positionnez votre visage dans le cadre et restez immobile pendant 30 secondes",
+    "scanning": "Analyse de vos signes vitaux...",
+    "complete": "Analyse Terminée",
+    "heartRate": "Fréquence Cardiaque",
+    "breathingRate": "Fréquence Respiratoire",
+    "stressLevel": "Niveau de Stress",
+    "bpm": "BPM",
+    "brpm": "resp/min",
+    "normal": "Normal",
+    "elevated": "Élevé",
+    "concerning": "Préoccupant",
+    "cameraPermission": "Nous avons besoin de l'accès à la caméra pour lire vos signes vitaux. Aucune image n'est stockée ou transmise.",
+    "cameraError": "Impossible d'accéder à la caméra. Veuillez autoriser l'accès et réessayer.",
+    "seconds": "secondes restantes"
+  },
+  "interview": {
+    "title": "Entrevue sur les Symptômes",
+    "subtitle": "Parlez-nous de vos symptômes",
+    "listening": "Écoute...",
+    "speaking": "L'IA parle...",
+    "processing": "Traitement...",
+    "startSpeaking": "Appuyez pour parler",
+    "tapToSpeak": "Appuyez sur le microphone pour répondre",
+    "transcript": "Conversation",
+    "complete": "Entrevue Terminée",
+    "questions": {
+      "greeting": "Bonjour! Je suis ici pour évaluer vos symptômes. Qu'est-ce qui vous dérange aujourd'hui?",
+      "duration": "Depuis combien de temps cela dure-t-il?",
+      "severity": "Sur une échelle de 1 à 10, quelle est la sévérité?",
+      "medications": "Prenez-vous actuellement des médicaments?",
+      "allergies": "Avez-vous des allergies connues?"
+    }
+  },
+  "assessment": {
+    "title": "Analyse de Votre Évaluation",
+    "subtitle": "Traitement des signes vitaux et des symptômes...",
+    "ctasLevel": "Niveau de Triage",
+    "recommendation": "Recommandation",
+    "reasoning": "Raisonnement de l'Évaluation",
+    "viewDetails": "Voir les Détails",
+    "viewReport": "Voir le Rapport",
+    "generating": "Génération de votre évaluation..."
+  },
+  "routing": {
+    "selfcare": {
+      "title": "Soins à Domicile",
+      "subtitle": "Vos symptômes peuvent être gérés à la maison",
+      "instructions": "Instructions de Soins à Domicile",
+      "warningTitle": "Consultez immédiatement si vous ressentez:",
+      "warningItems": [
+        "Difficulté soudaine à respirer",
+        "Douleur ou pression thoracique",
+        "Perte de connaissance",
+        "Saignement incontrôlable",
+        "Réaction allergique sévère"
+      ]
+    },
+    "pharmacy": {
+      "title": "Visitez une Pharmacie",
+      "subtitle": "Un pharmacien peut vous aider",
+      "nearbyTitle": "Pharmacies Ouvertes à Proximité"
+    },
+    "walkin": {
+      "title": "Visitez une Clinique Sans Rendez-vous",
+      "subtitle": "Consultez un médecin dans les 24-48 heures",
+      "nearbyTitle": "Cliniques Sans Rendez-vous à Proximité"
+    },
+    "er": {
+      "title": "Allez aux Urgences",
+      "subtitle": "Votre état nécessite des soins d'urgence",
+      "nearbyTitle": "Urgences les Plus Proches",
+      "waitTime": "Attente Est.",
+      "recommended": "Recommandé",
+      "viewReport": "Voir le Rapport de Triage"
+    }
+  },
+  "report": {
+    "triageTitle": "Rapport de Triage",
+    "triageSubtitle": "Pour l'Infirmière de Triage aux Urgences",
+    "visitTitle": "Résumé de Visite",
+    "visitSubtitle": "Pour Votre Professionnel de Santé",
+    "timestamp": "Heure de l'Évaluation",
+    "vitalsSection": "Signes Vitaux",
+    "symptomsSection": "Résumé des Symptômes",
+    "assessmentSection": "Évaluation IA",
+    "ctasSection": "Niveau CTAS Suggéré",
+    "disclaimerNote": "Ce rapport a été généré par Rivr, un outil de pré-évaluation alimenté par l'IA. Ce n'est pas un diagnostic médical.",
+    "downloadPDF": "Télécharger PDF",
+    "share": "Partager"
+  }
+}

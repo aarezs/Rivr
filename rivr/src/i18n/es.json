@@ -1,0 +1,106 @@
+{
+  "app": {
+    "title": "Rivr",
+    "tagline": "Dirigiéndote a la atención adecuada.",
+    "disclaimer": "Rivr es una herramienta de pre-evaluación impulsada por IA y no proporciona diagnósticos médicos. Siempre busque consejo médico profesional. En una emergencia, llame al 911.",
+    "loading": "Cargando...",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "download": "Descargar",
+    "close": "Cerrar",
+    "getDirections": "Obtener Direcciones",
+    "startOver": "Empezar de Nuevo"
+  },
+  "language": {
+    "title": "Bienvenido a Rivr",
+    "subtitle": "Elige tu idioma preferido",
+    "select": "Seleccionar Idioma"
+  },
+  "vitals": {
+    "title": "Escaneo de Signos Vitales",
+    "subtitle": "Mantén tu rostro estable frente a la cámara",
+    "instruction": "Coloca tu rostro dentro del marco y permanece quieto durante 30 segundos",
+    "scanning": "Escaneando tus signos vitales...",
+    "complete": "Escaneo Completo",
+    "heartRate": "Frecuencia Cardíaca",
+    "breathingRate": "Frecuencia Respiratoria",
+    "stressLevel": "Nivel de Estrés",
+    "bpm": "LPM",
+    "brpm": "resp/min",
+    "normal": "Normal",
+    "elevated": "Elevado",
+    "concerning": "Preocupante",
+    "cameraPermission": "Necesitamos acceso a la cámara para leer tus signos vitales. No se almacenan ni transmiten imágenes.",
+    "cameraError": "No se pudo acceder a la cámara. Por favor concede permiso e intenta de nuevo.",
+    "seconds": "segundos restantes"
+  },
+  "interview": {
+    "title": "Entrevista de Síntomas",
+    "subtitle": "Cuéntanos sobre tus síntomas",
+    "listening": "Escuchando...",
+    "speaking": "La IA está hablando...",
+    "processing": "Procesando...",
+    "startSpeaking": "Toca para empezar a hablar",
+    "tapToSpeak": "Toca el micrófono para responder",
+    "transcript": "Conversación",
+    "complete": "Entrevista Completa",
+    "questions": {
+      "greeting": "¡Hola! Estoy aquí para ayudar a evaluar tus síntomas. ¿Qué te molesta hoy?",
+      "duration": "¿Cuánto tiempo llevas con esto?",
+      "severity": "En una escala del 1 al 10, ¿qué tan severo es?",
+      "medications": "¿Estás tomando algún medicamento actualmente?",
+      "allergies": "¿Tienes alguna alergia conocida?"
+    }
+  },
+  "assessment": {
+    "title": "Analizando Tu Evaluación",
+    "subtitle": "Procesando signos vitales y síntomas...",
+    "ctasLevel": "Nivel de Triaje",
+    "recommendation": "Recomendación",
+    "reasoning": "Razonamiento de la Evaluación",
+    "viewDetails": "Ver Detalles",
+    "viewReport": "Ver Informe",
+    "generating": "Generando tu evaluación..."
+  },
+  "routing": {
+    "selfcare": {
+      "title": "Autocuidado en Casa",
+      "subtitle": "Tus síntomas pueden manejarse en casa",
+      "instructions": "Instrucciones de Cuidado en Casa",
+      "warningTitle": "Busca atención inmediata si experimentas:",
+      "warningItems": ["Dificultad repentina para respirar", "Dolor o presión en el pecho", "Pérdida de consciencia", "Sangrado incontrolable", "Reacción alérgica severa"]
+    },
+    "pharmacy": {
+      "title": "Visita una Farmacia",
+      "subtitle": "Un farmacéutico puede ayudarte",
+      "nearbyTitle": "Farmacias Abiertas Cercanas"
+    },
+    "walkin": {
+      "title": "Visita una Clínica Sin Cita",
+      "subtitle": "Consulta un médico en 24-48 horas",
+      "nearbyTitle": "Clínicas Sin Cita Cercanas"
+    },
+    "er": {
+      "title": "Ve a Urgencias",
+      "subtitle": "Tu condición requiere atención de emergencia",
+      "nearbyTitle": "Salas de Emergencia Más Cercanas",
+      "waitTime": "Espera Est.",
+      "recommended": "Recomendado",
+      "viewReport": "Ver Informe de Triaje"
+    }
+  },
+  "report": {
+    "triageTitle": "Informe de Triaje",
+    "triageSubtitle": "Para la Enfermera de Triaje de Urgencias",
+    "visitTitle": "Resumen de Visita",
+    "visitSubtitle": "Para Tu Proveedor de Salud",
+    "timestamp": "Hora de Evaluación",
+    "vitalsSection": "Signos Vitales",
+    "symptomsSection": "Resumen de Síntomas",
+    "assessmentSection": "Evaluación IA",
+    "ctasSection": "Nivel CTAS Sugerido",
+    "disclaimerNote": "Este informe fue generado por Rivr, una herramienta de pre-evaluación con IA. No es un diagnóstico médico.",
+    "downloadPDF": "Descargar PDF",
+    "share": "Compartir"
+  }
+}

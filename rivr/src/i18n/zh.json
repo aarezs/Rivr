@@ -1,0 +1,106 @@
+{
+  "app": {
+    "title": "Rivr",
+    "tagline": "引导您获得正确的护理。",
+    "disclaimer": "Rivr 是一个人工智能预评估工具，不提供医学诊断。请始终寻求专业医疗建议。紧急情况下请拨打 911。",
+    "loading": "加载中...",
+    "continue": "继续",
+    "back": "返回",
+    "download": "下载",
+    "close": "关闭",
+    "getDirections": "获取路线",
+    "startOver": "重新开始"
+  },
+  "language": {
+    "title": "欢迎来到 Rivr",
+    "subtitle": "选择您的首选语言",
+    "select": "选择语言"
+  },
+  "vitals": {
+    "title": "生命体征扫描",
+    "subtitle": "请将面部保持在相机前方",
+    "instruction": "将面部置于框架内，保持静止30秒",
+    "scanning": "正在扫描您的生命体征...",
+    "complete": "扫描完成",
+    "heartRate": "心率",
+    "breathingRate": "呼吸频率",
+    "stressLevel": "压力水平",
+    "bpm": "次/分",
+    "brpm": "呼吸/分",
+    "normal": "正常",
+    "elevated": "偏高",
+    "concerning": "需关注",
+    "cameraPermission": "我们需要相机权限来读取您的生命体征。不会存储或传输任何图像。",
+    "cameraError": "无法访问相机。请授予相机权限后重试。",
+    "seconds": "秒剩余"
+  },
+  "interview": {
+    "title": "症状问诊",
+    "subtitle": "告诉我们您的症状",
+    "listening": "正在听取...",
+    "speaking": "AI正在说话...",
+    "processing": "处理中...",
+    "startSpeaking": "点击开始说话",
+    "tapToSpeak": "点击麦克风回答",
+    "transcript": "对话记录",
+    "complete": "问诊完成",
+    "questions": {
+      "greeting": "您好！我来帮助评估您的症状。今天哪里不舒服？",
+      "duration": "这种情况持续多久了？",
+      "severity": "在1到10的范围内，严重程度如何？",
+      "medications": "您目前在服用什么药物吗？",
+      "allergies": "您有已知的过敏史吗？"
+    }
+  },
+  "assessment": {
+    "title": "分析评估结果",
+    "subtitle": "正在处理生命体征和症状...",
+    "ctasLevel": "分诊级别",
+    "recommendation": "建议",
+    "reasoning": "评估理由",
+    "viewDetails": "查看详情",
+    "viewReport": "查看报告",
+    "generating": "正在生成评估..."
+  },
+  "routing": {
+    "selfcare": {
+      "title": "居家护理",
+      "subtitle": "您的症状可以在家处理",
+      "instructions": "居家护理说明",
+      "warningTitle": "如出现以下情况请立即就医：",
+      "warningItems": ["突然呼吸困难", "胸痛或胸压", "失去意识", "无法控制的出血", "严重过敏反应"]
+    },
+    "pharmacy": {
+      "title": "前往药房",
+      "subtitle": "药剂师可以帮助您缓解症状",
+      "nearbyTitle": "附近营业药房"
+    },
+    "walkin": {
+      "title": "前往门诊",
+      "subtitle": "24-48小时内看医生",
+      "nearbyTitle": "附近门诊诊所"
+    },
+    "er": {
+      "title": "前往急诊室",
+      "subtitle": "您的状况需要紧急护理",
+      "nearbyTitle": "最近的急诊室",
+      "waitTime": "预计等待",
+      "recommended": "推荐",
+      "viewReport": "查看分诊报告"
+    }
+  },
+  "report": {
+    "triageTitle": "分诊报告",
+    "triageSubtitle": "致急诊科分诊护士",
+    "visitTitle": "就诊摘要",
+    "visitSubtitle": "致您的医疗服务提供者",
+    "timestamp": "评估时间",
+    "vitalsSection": "生命体征",
+    "symptomsSection": "症状摘要",
+    "assessmentSection": "AI评估",
+    "ctasSection": "建议CTAS级别",
+    "disclaimerNote": "本报告由 Rivr AI预评估工具生成，不构成医学诊断。",
+    "downloadPDF": "下载PDF",
+    "share": "分享"
+  }
+}
