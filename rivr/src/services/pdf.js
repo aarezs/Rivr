@@ -254,7 +254,7 @@ export function generateVisitSummaryPDF({ vitals, transcript, assessment, timest
 }
 
 function getVitalStatus(value, low, high) {
-  if (!value) return 'N/A';
+  if (value === null || value === undefined) return 'N/A';
   if (value < low) return 'LOW';
   if (value > high) return 'HIGH';
   return 'NORMAL';

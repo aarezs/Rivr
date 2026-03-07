@@ -63,6 +63,7 @@ export default function TriageReport({ vitals, transcript, assessment, onBack })
             </div>
           </div>
 
+
           {/* Vitals table */}
           <div className="glass rounded-xl p-5">
             <h3 className="font-semibold text-white mb-3 flex items-center gap-2">

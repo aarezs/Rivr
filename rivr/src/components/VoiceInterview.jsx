@@ -12,6 +12,7 @@ export default function VoiceInterview({ language, onComplete }) {
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesRef = useRef([]);
+  const completedRef = useRef(false);
 
   // Keep a ref in sync so the disconnect callback reads latest messages
   useEffect(() => {
@@ -28,6 +29,13 @@ export default function VoiceInterview({ language, onComplete }) {
     setMessages(prev => [...prev, { type, text: text.trim() }]);
   }, []);
 
+  // Guard against double-calling onComplete (endSession + onDisconnect race)
+  const finishInterview = useCallback((transcript) => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    onComplete(transcript);
+  }, [onComplete]);
+
   const conversation = useConversation({
     onConnect: () => {
       console.log('[ElevenLabs] Connected');
@@ -36,10 +44,10 @@ export default function VoiceInterview({ language, onComplete }) {
     },
     onDisconnect: () => {
       console.log('[ElevenLabs] Disconnected');
-      // Auto-proceed when the agent ends the conversation
+      // Agent ended the conversation — auto-advance
       if (messagesRef.current.length > 0) {
         const transcript = buildTranscript(messagesRef.current);
-        onComplete(transcript);
+        finishInterview(transcript);
       }
     },
     onMessage: (message) => {
@@ -84,7 +92,6 @@ export default function VoiceInterview({ language, onComplete }) {
   };
 
   const endInterview = async () => {
-    // Build transcript before ending since onDisconnect will fire
     const transcript = messages.length > 0
       ? buildTranscript(messages)
       : getMockTranscript();
@@ -93,11 +100,11 @@ export default function VoiceInterview({ language, onComplete }) {
     } catch {
       // Session may already be ended
     }
-    onComplete(transcript);
+    finishInterview(transcript);
   };
 
   const handleDemoFallback = () => {
-    onComplete(getMockTranscript());
+    finishInterview(getMockTranscript());
   };
 
   const isAgentSpeaking = conversation.isSpeaking;

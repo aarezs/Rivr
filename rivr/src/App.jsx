@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import LandingPage from './components/LandingPage';
 import LanguageSelect from './components/LanguageSelect';
-import VitalsScan from './components/VitalsScan';
 import VoiceInterview from './components/VoiceInterview';
 import Assessment from './components/Assessment';
 import CareRouting from './components/CareRouting';
@@ -12,7 +11,6 @@ const STEPS = {
   LANDING: 'landing',
   DISCLAIMER: 'disclaimer',
   LANGUAGE: 'language',
-  VITALS: 'vitals',
   INTERVIEW: 'interview',
   ASSESSMENT: 'assessment',
   ROUTING: 'routing',
@@ -23,37 +21,36 @@ export default function App() {
   const [currentStep, setCurrentStep] = useState(STEPS.LANDING);
   const [sessionData, setSessionData] = useState({
     language: null,
-    vitals: null,
     transcript: null,
     assessment: null,
+    vitals: null,
   });
 
   const handleLanguageSelect = useCallback((langCode) => {
-    setSessionData(prev => ({ ...prev, language: langCode }));
-    setCurrentStep(STEPS.VITALS);
-  }, []);
-
-  const handleVitalsComplete = useCallback((vitals) => {
-    setSessionData(prev => ({ ...prev, vitals }));
+    setSessionData((prev) => ({ ...prev, language: langCode }));
     setCurrentStep(STEPS.INTERVIEW);
   }, []);
 
   const handleInterviewComplete = useCallback((transcript) => {
-    setSessionData(prev => ({ ...prev, transcript }));
+    setSessionData((prev) => ({ ...prev, transcript }));
     setCurrentStep(STEPS.ASSESSMENT);
   }, []);
 
-  const handleAssessmentComplete = useCallback((assessment) => {
-    setSessionData(prev => ({ ...prev, assessment }));
+  const handleAssessmentComplete = useCallback((result) => {
+    setSessionData((prev) => ({
+      ...prev,
+      assessment: result.assessment,
+      vitals: result.assessment?.vitals || null,
+    }));
     setCurrentStep(STEPS.ROUTING);
   }, []);
 
   const handleStartOver = useCallback(() => {
     setSessionData({
       language: null,
-      vitals: null,
       transcript: null,
       assessment: null,
+      vitals: null,
     });
     setCurrentStep(STEPS.LANDING);
   }, []);
@@ -81,10 +78,6 @@ export default function App() {
         <LanguageSelect onSelect={handleLanguageSelect} />
       )}
 
-      {currentStep === STEPS.VITALS && (
-        <VitalsScan onComplete={handleVitalsComplete} />
-      )}
-
       {currentStep === STEPS.INTERVIEW && (
         <VoiceInterview
           language={sessionData.language}
@@ -94,7 +87,6 @@ export default function App() {
 
       {currentStep === STEPS.ASSESSMENT && (
         <Assessment
-          vitals={sessionData.vitals}
           transcript={sessionData.transcript}
           onComplete={handleAssessmentComplete}
         />
