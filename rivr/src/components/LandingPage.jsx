@@ -28,47 +28,41 @@ export default function LandingPage({ onStart }) {
       */}
 
       {/* ===== NAVBAR ===== */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5 p-10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center animate-glow-pulse">
-            <Activity className="w-4 h-4 text-primary" />
+      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5 px-10 py-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center animate-glow-pulse">
+            <Activity className="w-5 h-5 text-primary" />
           </div>
-          <span className="font-bold text-xl tracking-tight lg:text-2xl">
+          <span className="font-bold text-2xl lg:text-3xl tracking-tight">
             Rivr
           </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-8 lg:gap-12 text-sm lg:text-base font-medium text-text-light">
-          <a href="#features" className="hover:text-white transition-colors">
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            className="hover:text-white transition-colors"
-          >
-            How it Works
-          </a>
-          <a href="#about" className="hover:text-white transition-colors">
-            About
-          </a>
-        </div>
+      <div className="hidden md:flex items-center gap-10 text-base font-medium text-text-light">
+        <a href="#features" className="hover:text-white transition-colors">
+          Features
+        </a>
+        <a href="#how-it-works" className="hover:text-white transition-colors">
+          How it Works
+        </a>
+        <a href="#about" className="hover:text-white transition-colors">
+          About
+        </a>
+      </div>
 
-        <div className="flex items-center gap-4 lg:gap-6">
-          <button className="hidden sm:flex items-center gap-2 text-sm lg:text-base text-text-light hover:text-white transition-colors">
-            <Globe className="w-4 h-4" /> EN
-          </button>
-          <div className="w-px h-4 bg-white/10 hidden sm:block"></div>
-          <button className="!p-2 text-sm lg:text-base font-medium text-text-light hover:text-white transition-colors hidden sm:block">
-            Sign In
-          </button>
-          <button
-            onClick={onStart}
-            className="!p-1  px-5 lg:px-6 py-2.5 lg:py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-medium text-sm lg:text-base transition-all shadow-lg shadow-primary/20"
-          >
-            Get Started
-          </button>
-        </div>
-      </nav>
+      <div className="flex items-center gap-4">
+  <button className="px-6 py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-medium text-base transition-all shadow-lg shadow-primary/20">
+    Sign In
+  </button>
+
+  <button
+    onClick={onStart}
+    className="px-6 py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-medium text-base transition-all shadow-lg shadow-primary/20"
+  >
+    Get Started
+  </button>
+</div>
+    </nav>
 
       <main className="flex-1 w-full pt-20 md:pt-24 pb-20 lg:pb-32">
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-10 test">

@@ -1,5 +1,4 @@
 // ElevenLabs Conversational AI configuration
-
 export const ELEVENLABS_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
 
 // Language code mapping for ElevenLabs override
