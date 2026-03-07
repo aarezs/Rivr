@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { FileText, Download, ArrowLeft, Heart, Wind, Brain, Clock, AlertTriangle, Stethoscope, Thermometer, Activity } from 'lucide-react';
+import { FileText, Download, ArrowLeft, Clock, AlertTriangle, Stethoscope } from 'lucide-react';
 import { generateVisitSummaryPDF, downloadPDF } from '../services/pdf';
 
-export default function VisitSummary({ vitals, transcript, assessment, language, onBack }) {
+export default function VisitSummary({ transcript, assessment, language, onBack }) {
   const { t } = useTranslation();
   const timestamp = new Date().toLocaleString('en-CA', {
     dateStyle: 'full',
@@ -10,7 +10,7 @@ export default function VisitSummary({ vitals, transcript, assessment, language,
   });
 
   const handleDownload = () => {
-    const doc = generateVisitSummaryPDF({ vitals, transcript, assessment, timestamp, language });
+    const doc = generateVisitSummaryPDF({ transcript, assessment, timestamp, language });
     downloadPDF(doc, `rivr-visit-summary-${Date.now()}.pdf`);
   };
 
@@ -56,30 +56,6 @@ export default function VisitSummary({ vitals, transcript, assessment, language,
             </div>
           </div>
 
-
-          {/* Vitals snapshot */}
-          <div className="glass rounded-xl p-5">
-            <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-              <Heart className="w-4 h-4 text-primary" />
-              {t('report.vitalsSection')}
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: t('vitals.heartRate'), value: vitals?.heartRate || '--', unit: t('vitals.bpm'), icon: Heart, color: '#F56565' },
-                { label: t('vitals.breathingRate'), value: vitals?.breathingRate || '--', unit: t('vitals.brpm'), icon: Wind, color: '#2E9BDA' },
-                { label: 'Temp', value: vitals?.temperature || '--', unit: '°C', icon: Thermometer, color: '#ECC94B' },
-                { label: 'SpO2', value: vitals?.oxygenLevel || '--', unit: '%', icon: Activity, color: '#48BB78' },
-                { label: t('vitals.stressLevel'), value: vitals?.stressLevel || '--', unit: '%', icon: Brain, color: '#ECC94B' },
-              ].map((vital, i) => (
-                <div key={i} className="text-center p-3 rounded-xl bg-dark-bg/50">
-                  <vital.icon className="w-5 h-5 mx-auto mb-1" style={{ color: vital.color }} />
-                  <p className="text-xl font-bold text-white">{vital.value}</p>
-                  <p className="text-[10px] text-text-light">{vital.unit}</p>
-                  <p className="text-[10px] text-text-light mt-1">{vital.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* What I was experiencing */}
           <div className="glass rounded-xl p-5">

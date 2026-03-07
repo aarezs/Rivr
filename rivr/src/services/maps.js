@@ -1,23 +1,109 @@
-// Google Maps / Places API wrapper
-// Using Leaflet + OpenStreetMap (free, no API key) instead of Google Maps
+// OpenStreetMap Overpass API wrapper for real facility data
 
-export function getMockFacilities(type) {
-  const facilities = {
-    pharmacy: [
-      { name: 'Shoppers Drug Mart', address: '75 King St S, Waterloo, ON', distance: '0.8 km', open: true, hours: '8 AM - 10 PM', phone: '(519) 886-1010', rating: 4.2, lat: 43.4630, lng: -80.5220 },
-      { name: 'Rexall', address: '220 King St N, Waterloo, ON', distance: '1.2 km', open: true, hours: '9 AM - 9 PM', phone: '(519) 888-7200', rating: 4.0, lat: 43.4700, lng: -80.5240 },
-      { name: 'Pharmasave', address: '91 King St N, Waterloo, ON', distance: '1.5 km', open: false, hours: '9 AM - 6 PM', phone: '(519) 745-2200', rating: 4.5, lat: 43.4675, lng: -80.5190 },
-    ],
-    walkin: [
-      { name: 'K-W Walk-In Clinic', address: '455 Highland Rd W, Kitchener, ON', distance: '2.1 km', open: true, hours: '8 AM - 8 PM', phone: '(519) 742-4455', rating: 3.8, lat: 43.4480, lng: -80.5080 },
-      { name: 'Grand River Walk-In', address: '185 King St S, Waterloo, ON', distance: '0.9 km', open: true, hours: '9 AM - 5 PM', phone: '(519) 880-1234', rating: 4.1, lat: 43.4610, lng: -80.5215 },
-      { name: 'Fairway Medical Clinic', address: '710 Belmont Ave W, Kitchener, ON', distance: '3.4 km', open: false, hours: '8:30 AM - 4:30 PM', phone: '(519) 743-6131', rating: 4.3, lat: 43.4350, lng: -80.5000 },
-    ],
-  };
+const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const SEARCH_RADIUS = 50000; // 50km
+const AVG_CITY_SPEED_KMH = 40;
+const ROAD_FACTOR = 1.3; // road distance ≈ 1.3x straight-line
 
-  return facilities[type] || [];
+const QUERY_TAGS = {
+  hospital: '["amenity"="hospital"]["emergency"="yes"]',
+  er:       '["amenity"="hospital"]["emergency"="yes"]',
+  walkin:   '["amenity"="clinic"]',
+  pharmacy: '["amenity"="pharmacy"]',
+};
+
+const FALLBACK_NAMES = {
+  hospital: 'General Hospital',
+  er:       'General Hospital',
+  walkin:   'Medical Clinic',
+  pharmacy: 'Local Pharmacy',
+};
+
+// Haversine distance in km
+export function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
 }
 
-export function getDirectionsUrl(address) {
+function estimateDriveTime(distanceKm) {
+  return Math.max(1, Math.round((distanceKm * ROAD_FACTOR) / AVG_CITY_SPEED_KMH * 60));
+}
+
+export function getUserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported by your browser'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => reject(err),
+      { timeout: 10000, enableHighAccuracy: true },
+    );
+  });
+}
+
+export async function fetchNearbyFacilities(type, lat, lng) {
+  const queryTag = QUERY_TAGS[type];
+  if (!queryTag) return [];
+
+  const query = `
+    [out:json][timeout:25];
+    (
+      node${queryTag}(around:${SEARCH_RADIUS},${lat},${lng});
+      way${queryTag}(around:${SEARCH_RADIUS},${lat},${lng});
+      relation${queryTag}(around:${SEARCH_RADIUS},${lat},${lng});
+    );
+    out center;
+  `;
+
+  try {
+    const res = await fetch(OVERPASS_URL, { method: 'POST', body: query });
+    if (!res.ok) throw new Error(`Overpass returned ${res.status}`);
+    const data = await res.json();
+
+    const facilities = [];
+    for (const el of data.elements) {
+      const elLat = el.lat ?? el.center?.lat;
+      const elLng = el.lon ?? el.center?.lon;
+      if (elLat == null || elLng == null) continue;
+
+      const distance = calculateDistance(lat, lng, elLat, elLng);
+      const driveTime = estimateDriveTime(distance);
+      const name = el.tags?.name;
+
+      facilities.push({
+        id: el.id,
+        name: name || FALLBACK_NAMES[type],
+        hasRealName: !!name,
+        address: [el.tags?.['addr:housenumber'], el.tags?.['addr:street'], el.tags?.['addr:city']]
+          .filter(Boolean).join(' ') || 'Address unavailable',
+        phone: el.tags?.phone || null,
+        lat: elLat,
+        lng: elLng,
+        distance,
+        driveDistance: `${distance} km`,
+        driveTime: `${driveTime} min drive`,
+        open: true,
+      });
+    }
+
+    return facilities.sort((a, b) => a.distance - b.distance);
+  } catch (error) {
+    console.error('Overpass API Error:', error);
+    return [];
+  }
+}
+
+export function getDirectionsUrl(address, lat, lng) {
+  if (lat && lng) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  }
   return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(address);
 }

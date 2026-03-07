@@ -109,8 +109,9 @@ export default function MapView({ facilities, type, showWaitTimes = false }) {
   };
   const color = typeColors[type] || '#2E9BDA';
 
-  // Enrich facilities with mock driving info
+  // Enrich facilities with mock driving info only if not already present
   const enrichedFacilities = facilities.map(f => {
+    if (f.driveDistance && f.driveTime) return f;
     const driving = calcMockDriving(f);
     return { ...f, driveDistance: driving.driveDistance, driveTime: driving.driveTime };
   });
@@ -218,7 +219,7 @@ export default function MapView({ facilities, type, showWaitTimes = false }) {
               </div>
 
               <a
-                href={getDirectionsUrl(facility.address)}
+                href={getDirectionsUrl(facility.address, facility.lat, facility.lng)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-105"

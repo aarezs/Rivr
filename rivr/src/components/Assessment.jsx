@@ -2,11 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Activity, Shield, ChevronRight, Stethoscope, Brain,
-  Heart, Wind, Thermometer, MessageSquare, AlertTriangle,
+  MessageSquare, AlertTriangle,
 } from 'lucide-react';
 import { ctasLevels } from '../data/ctasDefinitions';
-import { assessWithGemini } from '../services/gemini';
-import { getVitalStatus } from '../services/presage';
+import { assessTranscript } from '../services/ai';
 
 export default function Assessment({ transcript, onComplete }) {
   const { t } = useTranslation();
@@ -16,6 +15,8 @@ export default function Assessment({ transcript, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0); // 0-3 for analysis steps
   const hasRun = useRef(false);
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     if (hasRun.current) return;
     hasRun.current = true;
@@ -23,27 +24,33 @@ export default function Assessment({ transcript, onComplete }) {
     // Animate progress bar
     const progressInterval = setInterval(() => {
       setProgress((p) => {
-        if (p >= 95) return 95; // Hold at 95 until Gemini finishes
+        if (p >= 95) return 95;
         return p + Math.random() * 8 + 2;
       });
     }, 400);
 
     const run = async () => {
-      const apiKey = import.meta.env?.VITE_GEMINI_API_KEY;
+      const apiKey = import.meta.env?.VITE_BACKBOARD_API_KEY;
 
-      const { extraction, assessment } = await assessWithGemini(
-        transcript,
-        apiKey,
-        (step) => setCurrentStep(step),
-      );
+      try {
+        const { extraction, assessment } = await assessTranscript(
+          transcript,
+          apiKey,
+          (step) => setCurrentStep(step),
+        );
 
-      setResult({ extraction, assessment });
-      setProgress(100);
-      clearInterval(progressInterval);
-      setTimeout(() => setPhase('result'), 600);
+        setResult({ extraction, assessment });
+        setProgress(100);
+        clearInterval(progressInterval);
+        setTimeout(() => setPhase('result'), 600);
+      } catch (err) {
+        console.error("Assessment error", err);
+        setError(err.message || "Failed to analyze chat. Please try again.");
+        clearInterval(progressInterval);
+        setPhase('error');
+      }
     };
 
-    // Small initial delay for the UI animation
     setTimeout(run, 800);
 
     return () => clearInterval(progressInterval);
@@ -51,16 +58,36 @@ export default function Assessment({ transcript, onComplete }) {
 
   const assessment = result?.assessment;
   const extraction = result?.extraction;
-  const vitals = assessment?.vitals;
   const ctasInfo = assessment ? ctasLevels[assessment.ctasLevel] : null;
 
-  // Analysis steps — explicitly show two-pass architecture
+  // Analysis steps
   const analysisSteps = [
     { icon: MessageSquare, label: 'Reading interview transcript...' },
-    { icon: Brain, label: 'Extracting symptoms & vitals (Pass 1)...' },
+    { icon: Brain, label: 'Extracting symptoms (Pass 1)...' },
     { icon: Stethoscope, label: 'Running CTAS assessment (Pass 2)...' },
     { icon: Shield, label: 'Generating care recommendation...' },
   ];
+
+  // --------------- ERROR SCREEN ---------------
+  if (phase === 'error') {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-dark-bg px-4 relative z-10">
+        <div className="text-center max-w-sm animate-fade-in-up">
+          <div className="w-24 h-24 rounded-full bg-danger/10 border border-danger/20 flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-12 h-12 text-danger" />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Assessment Failed</h2>
+          <p className="text-white/80 text-sm mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-8 py-4 rounded-xl bg-primary text-white font-semibold transition-all hover:bg-primary-dark shadow-lg shadow-primary/20 cursor-pointer"
+          >
+            Start Over
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // --------------- ANALYZING SCREEN ---------------
   if (phase === 'analyzing') {
@@ -124,34 +151,6 @@ export default function Assessment({ transcript, onComplete }) {
   }
 
   // --------------- RESULT SCREEN ---------------
-
-  const hrStatus = getVitalStatus('heartRate', vitals?.heartRate);
-  const brStatus = getVitalStatus('breathingRate', vitals?.breathingRate);
-  const stressStatus = getVitalStatus('stressLevel', vitals?.stressLevel);
-  const tempStatus =
-    vitals?.temperature == null ? 'unknown' : vitals.temperature > 37.5 ? 'elevated' : 'normal';
-  const spo2Status =
-    vitals?.oxygenLevel == null ? 'unknown' : vitals.oxygenLevel < 95 ? 'concerning' : 'normal';
-
-  const statusColor = (status) => {
-    if (status === 'normal') return 'text-primary';
-    if (status === 'elevated') return 'text-warning';
-    if (status === 'unknown') return 'text-text-light';
-    return 'text-danger';
-  };
-  const statusDot = (status) => {
-    if (status === 'normal') return 'bg-primary';
-    if (status === 'elevated') return 'bg-warning';
-    if (status === 'unknown') return 'bg-text-light';
-    return 'bg-danger';
-  };
-  const statusLabel = (status) => {
-    if (status === 'normal') return 'Normal';
-    if (status === 'elevated') return 'Elevated';
-    if (status === 'unknown') return 'N/A';
-    return 'Concerning';
-  };
-
   return (
     <div className="min-h-[100dvh] flex flex-col bg-dark-bg px-4 py-8 relative z-10">
       <div className="max-w-sm mx-auto w-full animate-fade-in-up">
@@ -171,7 +170,6 @@ export default function Assessment({ transcript, onComplete }) {
               <span className="text-xs font-bold text-white uppercase tracking-wider">
                 Symptoms Identified
               </span>
-              <span className="ml-auto text-[10px] text-primary font-mono">Pass 1</span>
             </div>
             <div className="space-y-2">
               {extraction.symptoms.slice(0, 5).map((s, i) => (
@@ -213,92 +211,6 @@ export default function Assessment({ transcript, onComplete }) {
           </div>
         )}
 
-        {/* Vitals Grid - 2x2 glass cards */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="glass rounded-xl p-4">
-            <Heart className="w-4 h-4 text-primary mb-2" />
-            <div className="text-[10px] text-text-light mb-1">Heart Rate</div>
-            <div className="font-bold text-lg text-white mb-1">
-              {vitals?.heartRate || '--'}{' '}
-              <span className="text-xs font-normal text-text-light">bpm</span>
-            </div>
-            <div className={`flex items-center gap-1 text-[10px] ${statusColor(hrStatus)}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${statusDot(hrStatus)}`} />
-              {statusLabel(hrStatus)}
-            </div>
-          </div>
-
-          <div className="glass rounded-xl p-4">
-            <Thermometer
-              className={`w-4 h-4 mb-2 ${
-                tempStatus === 'elevated' ? 'text-warning' : 'text-primary'
-              }`}
-            />
-            <div className="text-[10px] text-text-light mb-1">Temp</div>
-            <div className="font-bold text-lg text-white mb-1">
-              {vitals?.temperature || '--'}
-              <span className="text-xs font-normal text-text-light">°C</span>
-            </div>
-            <div className={`flex items-center gap-1 text-[10px] ${statusColor(tempStatus)}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${statusDot(tempStatus)}`} />
-              {statusLabel(tempStatus)}
-            </div>
-          </div>
-
-          <div className="glass rounded-xl p-4">
-            <Activity className="w-4 h-4 text-primary mb-2" />
-            <div className="text-[10px] text-text-light mb-1">SpO2</div>
-            <div className="font-bold text-lg text-white mb-1">
-              {vitals?.oxygenLevel || '--'}
-              <span className="text-xs font-normal text-text-light">%</span>
-            </div>
-            <div className={`flex items-center gap-1 text-[10px] ${statusColor(spo2Status)}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${statusDot(spo2Status)}`} />
-              {statusLabel(spo2Status)}
-            </div>
-          </div>
-
-          <div className="glass rounded-xl p-4">
-            <Wind className="w-4 h-4 text-primary mb-2" />
-            <div className="text-[10px] text-text-light mb-1">Breathing</div>
-            <div className="font-bold text-lg text-white mb-1">
-              {vitals?.breathingRate || '--'}{' '}
-              <span className="text-xs font-normal text-text-light">br/min</span>
-            </div>
-            <div className={`flex items-center gap-1 text-[10px] ${statusColor(brStatus)}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${statusDot(brStatus)}`} />
-              {statusLabel(brStatus)}
-            </div>
-          </div>
-        </div>
-
-        {/* Stress level bar */}
-        <div className="glass rounded-xl p-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Brain className="w-4 h-4 text-primary" />
-              <span className="text-[10px] text-text-light">Stress Level</span>
-            </div>
-            <span className={`text-sm font-bold ${statusColor(stressStatus)}`}>
-              {vitals?.stressLevel != null ? vitals.stressLevel + '%' : '--'}
-            </span>
-          </div>
-          <div className="w-full h-1.5 bg-dark-bg-lighter rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${
-                stressStatus === 'normal'
-                  ? 'bg-primary'
-                  : stressStatus === 'elevated'
-                    ? 'bg-warning'
-                    : stressStatus === 'unknown'
-                      ? 'bg-text-light'
-                      : 'bg-danger'
-              }`}
-              style={{ width: `${Math.min(vitals?.stressLevel || 0, 100)}%` }}
-            />
-          </div>
-        </div>
-
         {/* Assessment Result */}
         <div
           className="glass rounded-xl p-5 mb-4 border-l-2"
@@ -318,11 +230,10 @@ export default function Assessment({ transcript, onComplete }) {
             >
               CTAS {assessment?.ctasLevel}
             </span>
-            <span className="text-[10px] text-primary font-mono">Pass 2</span>
           </div>
           <p className="text-xs text-text-medium leading-relaxed mb-4">
             {ctasInfo?.careAction ||
-              'Based on your symptoms and vitals, we recommend visiting a walk-in clinic within the next 4 hours.'}
+              'Based on your symptoms, we recommend visiting a walk-in clinic within the next 4 hours.'}
           </p>
           <div className="text-xs text-text-light p-3 bg-dark-bg-lighter/50 rounded-lg border border-white/5">
             <span className="font-medium text-white/70 block mb-1">Clinical Reasoning:</span>

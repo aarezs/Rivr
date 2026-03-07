@@ -54,6 +54,24 @@ export default function VoiceInterview({ language, onComplete }) {
       console.log('[ElevenLabs] Message:', message);
       if (message.source === 'ai') {
         addMessage('ai', message.message);
+        
+        // Auto-end interview if AI indicates it's done (fallback for agents without end-call tools)
+        // Only trigger after at least 6 messages (3 exchanges) to prevent premature ending
+        const totalMessages = messagesRef.current.length + 1; // +1 for this message
+        if (totalMessages >= 6) {
+          const text = message.message.toLowerCase();
+          if (
+            text.includes('please hold while') ||
+            text.includes('just finalizing') ||
+            text.includes('enough to make an assessment') ||
+            text.includes('i have enough information') ||
+            (text.includes('thank you') && text.includes('i recommend'))
+          ) {
+            setTimeout(() => {
+              endInterview();
+            }, 4000); // Give the agent time to finish speaking
+          }
+        }
       } else if (message.source === 'user') {
         addMessage('user', message.message);
       }
@@ -92,8 +110,8 @@ export default function VoiceInterview({ language, onComplete }) {
   };
 
   const endInterview = async () => {
-    const transcript = messages.length > 0
-      ? buildTranscript(messages)
+    const transcript = messagesRef.current.length > 0
+      ? buildTranscript(messagesRef.current)
       : getMockTranscript();
     try {
       await conversation.endSession();

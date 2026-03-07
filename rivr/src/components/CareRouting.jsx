@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Home,
@@ -15,13 +15,12 @@ import {
   ChevronRight,
   ArrowLeft,
   MapPin,
-  Wind,
-  Brain,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { ctasLevels } from "../data/ctasDefinitions";
-import { getERsSortedByWait } from "../data/erWaitTimes";
-import { getMockFacilities } from "../services/maps";
+import { fetchERWaitTimes } from "../data/erWaitTimes";
+import { fetchNearbyFacilities, getUserLocation } from "../services/maps";
 import MapView from "./ui/MapView";
 import TriageReport from "./TriageReport";
 import VisitSummary from "./VisitSummary";
@@ -55,12 +54,14 @@ const careScreens = {
 
 export default function CareRouting({
   assessment,
-  vitals,
   transcript,
   onStartOver,
 }) {
   const { t, i18n } = useTranslation();
   const [step, setStep] = useState("main"); // main, report, map
+  
+  const [facilities, setFacilities] = useState([]);
+  const [loadingFacilities, setLoadingFacilities] = useState(false);
 
   const careLevel = assessment?.careRecommendation || "walkin";
   const ctasInfo = ctasLevels[assessment?.ctasLevel] || ctasLevels[4];
@@ -68,19 +69,42 @@ export default function CareRouting({
   const Icon = config.icon;
   const isER = careLevel === "er";
 
-  // Get facilities based on care level
-  const erHospitals = getERsSortedByWait().map((h, i) => ({
-    ...h,
-    recommended: i === 0,
-  }));
-  const pharmacies = getMockFacilities("pharmacy");
-  const walkins = getMockFacilities("walkin");
+  // Fetch facilities dynamically based on location
+  useEffect(() => {
+    if (careLevel === 'selfcare' || careLevel === 'pharmacy') return;
+    
+    let isMounted = true;
+    async function load() {
+      setLoadingFacilities(true);
+      try {
+        // Try getting location, fallback to Waterloo, ON coordinates if blocked
+        const { lat, lng } = await getUserLocation().catch(() => ({ lat: 43.4643, lng: -80.5204 }));
+        
+        let data = [];
+        if (isER) {
+          data = await fetchERWaitTimes(lat, lng);
+        } else if (careLevel === 'walkin') {
+          data = await fetchNearbyFacilities('walkin', lat, lng);
+          if (data.length > 0) data[0].recommended = true;
+        }
+        
+        if (isMounted) {
+          setFacilities(data);
+        }
+      } catch (err) {
+        console.error("Failed to load facilities map data", err);
+      } finally {
+        if (isMounted) setLoadingFacilities(false);
+      }
+    }
+    load();
+    return () => { isMounted = false; };
+  }, [careLevel, isER]);
 
   // === FULLSCREEN TRIAGE REPORT (ER) ===
   if (step === "report" && (isER || assessment?.ctasLevel <= 3)) {
     return (
       <TriageReport
-        vitals={vitals}
         transcript={transcript}
         assessment={assessment}
         onBack={() => setStep("main")}
@@ -88,14 +112,10 @@ export default function CareRouting({
     );
   }
 
-  // === FULLSCREEN VISIT SUMMARY (Walk-in or Pharmacy) ===
-  if (
-    step === "report" &&
-    (careLevel === "walkin" || careLevel === "pharmacy")
-  ) {
+  // === FULLSCREEN VISIT SUMMARY (Walk-in) ===
+  if (step === "report" && careLevel === "walkin") {
     return (
       <VisitSummary
-        vitals={vitals}
         transcript={transcript}
         assessment={assessment}
         language={i18n.language}
@@ -106,21 +126,10 @@ export default function CareRouting({
 
   // === MAP PAGE (separate page for hospitals/clinics/pharmacies) ===
   if (step === "map") {
-    const mapFacilities = isER
-      ? erHospitals
-      : careLevel === "walkin"
-        ? walkins
-        : pharmacies;
-    const mapType = isER
-      ? "er"
-      : careLevel === "walkin"
-        ? "walkin"
-        : "pharmacy";
+    const mapType = isER ? "er" : "walkin";
     const mapTitle = isER
       ? "Nearest Emergency Rooms"
-      : careLevel === "walkin"
-        ? "Nearest Walk-In Clinics"
-        : "Nearest Pharmacies";
+      : "Nearest Walk-In Clinics";
 
     return (
       <div className="min-h-[100dvh] flex flex-col bg-dark-bg relative z-10">
@@ -145,11 +154,21 @@ export default function CareRouting({
         {/* Map + List */}
         <div className="flex-1 px-4 lg:px-8 pb-8 lg:pb-12 overflow-y-auto">
           <div className="max-w-sm lg:max-w-2xl mx-auto w-full animate-fade-in-up">
-            <MapView
-              facilities={mapFacilities}
-              type={mapType}
-              showWaitTimes={isER}
-            />
+            {loadingFacilities ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+                <p className="text-white/80 font-medium">Finding nearest facilities...</p>
+                <p className="text-text-light text-xs mt-2 text-center max-w-xs">
+                  Calculating drive times and ER capacities based on your exact location.
+                </p>
+              </div>
+            ) : (
+              <MapView
+                facilities={facilities}
+                type={mapType}
+                showWaitTimes={isER}
+              />
+            )}
           </div>
         </div>
 
@@ -271,42 +290,55 @@ export default function CareRouting({
         {/* ========== PHARMACY ========== */}
         {careLevel === "pharmacy" && (
           <div className="space-y-4 lg:space-y-5 animate-fade-in-up">
-            {/* Quick summary card */}
-            <div className="glass rounded-xl p-5 lg:p-6">
-              <h3 className="font-semibold text-base lg:text-lg text-white mb-2 lg:mb-3 flex items-center gap-2">
-                <Pill className="w-4 h-4 text-accent" />
-                What to tell the pharmacist
-              </h3>
-              <p className="text-sm lg:text-base text-text-light leading-relaxed">
-                {assessment?.symptomSummary ||
-                  "Show this summary to the pharmacist for faster assistance."}
+            {/* Main message */}
+            <div
+              className="rounded-xl p-6 lg:p-8 text-center"
+              style={{
+                backgroundColor: "rgba(46, 155, 218, 0.08)",
+                border: "1px solid rgba(46, 155, 218, 0.2)",
+              }}
+            >
+              <Pill className="w-14 lg:w-16 h-14 lg:h-16 mx-auto mb-4 lg:mb-6 text-accent" />
+              <h2 className="text-xl lg:text-3xl font-bold text-white mb-2 lg:mb-3">
+                Visit your local pharmacy.
+              </h2>
+              <p className="text-text-light text-sm lg:text-base leading-relaxed">
+                Based on your assessment, over-the-counter medication or a
+                pharmacist consultation should help manage your symptoms.
               </p>
             </div>
 
-            {/* View visit summary */}
-            <button
-              onClick={() => setStep("report")}
-              className="w-full py-3.5 lg:py-4 px-5 rounded-xl font-medium text-white text-sm lg:text-base flex items-center justify-center gap-2
-                glass hover:bg-white/5 transition-all duration-300 cursor-pointer"
-            >
-              <FileText className="w-5 h-5" />
-              View Visit Summary
-            </button>
+            {/* Care instructions */}
+            <div className="glass rounded-xl p-5 lg:p-6">
+              <h3 className="font-semibold text-base lg:text-lg text-white mb-3 lg:mb-4 flex items-center gap-2">
+                <Pill className="w-4 h-4 text-accent" />
+                Care Instructions
+              </h3>
+              <p className="text-sm lg:text-base text-text-light leading-relaxed">
+                {assessment?.carePlanDetails ||
+                  "Speak with a pharmacist about your symptoms. They can recommend appropriate over-the-counter medication and advise if further medical attention is needed."}
+              </p>
+            </div>
 
-            {/* Go to map button */}
-            <button
-              onClick={() => setStep("map")}
-              className="w-full py-4 lg:py-5 px-5 rounded-xl font-semibold text-white text-sm lg:text-base flex items-center justify-center gap-2
-                transition-all duration-300 hover:shadow-lg cursor-pointer"
+            {/* Warning signs */}
+            <div
+              className="rounded-xl p-5 lg:p-6"
               style={{
-                backgroundColor: config.borderColor,
-                boxShadow: `0 4px 15px ${config.borderColor}30`,
+                backgroundColor: "rgba(245, 101, 101, 0.06)",
+                border: "1px solid rgba(245, 101, 101, 0.15)",
               }}
             >
-              <MapPin className="w-5 h-5" />
-              Find Nearby Pharmacies
-              <ChevronRight className="w-5 h-5" />
-            </button>
+              <h3 className="font-semibold text-base lg:text-lg text-white mb-3 lg:mb-4 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-danger" />
+                If symptoms get worse...
+              </h3>
+              <p className="text-sm lg:text-base text-text-light leading-relaxed">
+                Come back to{" "}
+                <span className="text-primary font-semibold">Rivr</span> for a
+                new assessment, or visit your nearest walk-in clinic or
+                emergency room if you experience worsening or new symptoms.
+              </p>
+            </div>
           </div>
         )}
 
@@ -329,15 +361,6 @@ export default function CareRouting({
                   <Shield className="w-3 h-3 text-warning shrink-0" />
                   <span>
                     CTAS Level {assessment?.ctasLevel} — {ctasInfo.name}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Heart className="w-3 h-3 text-primary shrink-0" />
-                  <span>
-                    HR: {vitals?.heartRate || "--"} | BR:{" "}
-                    {vitals?.breathingRate || "--"} | Temp:{" "}
-                    {vitals?.temperature || "--"}°C | SpO2:{" "}
-                    {vitals?.oxygenLevel || "--"}%
                   </span>
                 </div>
                 <div className="pt-1 border-t border-white/5 mt-2">
@@ -420,15 +443,6 @@ export default function CareRouting({
                   <Shield className="w-3 h-3 text-danger shrink-0" />
                   <span>
                     CTAS Level {assessment?.ctasLevel} — {ctasInfo.name}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Heart className="w-3 h-3 text-primary shrink-0" />
-                  <span>
-                    HR: {vitals?.heartRate || "--"} | BR:{" "}
-                    {vitals?.breathingRate || "--"} | Temp:{" "}
-                    {vitals?.temperature || "--"}°C | SpO2:{" "}
-                    {vitals?.oxygenLevel || "--"}%
                   </span>
                 </div>
                 <p className="text-text-light leading-relaxed mt-1">

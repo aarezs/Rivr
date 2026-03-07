@@ -23,7 +23,6 @@ export default function App() {
     language: null,
     transcript: null,
     assessment: null,
-    vitals: null,
   });
 
   const handleLanguageSelect = useCallback((langCode) => {
@@ -40,7 +39,6 @@ export default function App() {
     setSessionData((prev) => ({
       ...prev,
       assessment: result.assessment,
-      vitals: result.assessment?.vitals || null,
     }));
     setCurrentStep(STEPS.ROUTING);
   }, []);
@@ -50,7 +48,6 @@ export default function App() {
       language: null,
       transcript: null,
       assessment: null,
-      vitals: null,
     });
     setCurrentStep(STEPS.LANDING);
   }, []);
@@ -95,7 +92,6 @@ export default function App() {
       {currentStep === STEPS.ROUTING && (
         <CareRouting
           assessment={sessionData.assessment}
-          vitals={sessionData.vitals}
           transcript={sessionData.transcript}
           onStartOver={handleStartOver}
         />

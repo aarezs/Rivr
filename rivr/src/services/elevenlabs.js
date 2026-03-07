@@ -22,12 +22,7 @@ export function buildTranscript(messages) {
     .join('\n');
 }
 
-// --- Mock fallbacks (kept for offline/demo use) ---
-
-export function getMockInterviewQuestions() {
-  return [];
-}
-
+// Mock transcript for offline/demo fallback
 export function getMockTranscript() {
   return `Patient reports persistent severe headaches for 3 days, rated 6-7/10 severity.
 Pain localized behind the eyes, worsening over time.

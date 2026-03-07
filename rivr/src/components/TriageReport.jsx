@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { FileText, Download, ArrowLeft, Shield, Clock, Heart, Wind, Brain, AlertTriangle, Thermometer, Activity } from 'lucide-react';
+import { FileText, Download, ArrowLeft, Shield, Clock, AlertTriangle } from 'lucide-react';
 import { ctasLevels } from '../data/ctasDefinitions';
 import { generateTriageReportPDF, downloadPDF } from '../services/pdf';
 
-export default function TriageReport({ vitals, transcript, assessment, onBack }) {
+export default function TriageReport({ transcript, assessment, onBack }) {
   const { t } = useTranslation();
   const ctasInfo = ctasLevels[assessment?.ctasLevel] || ctasLevels[3];
   const timestamp = new Date().toLocaleString('en-CA', {
@@ -12,7 +12,7 @@ export default function TriageReport({ vitals, transcript, assessment, onBack })
   });
 
   const handleDownload = () => {
-    const doc = generateTriageReportPDF({ vitals, transcript, assessment, timestamp });
+    const doc = generateTriageReportPDF({ transcript, assessment, timestamp });
     downloadPDF(doc, `rivr-triage-report-${Date.now()}.pdf`);
   };
 
@@ -63,34 +63,6 @@ export default function TriageReport({ vitals, transcript, assessment, onBack })
             </div>
           </div>
 
-
-          {/* Vitals table */}
-          <div className="glass rounded-xl p-5">
-            <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-              <Heart className="w-4 h-4 text-primary" />
-              Vital Signs
-            </h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Heart Rate', value: `${vitals?.heartRate || '--'} BPM`, range: '60-100 BPM', icon: Heart },
-                { label: 'Breathing Rate', value: `${vitals?.breathingRate || '--'} br/min`, range: '12-20 br/min', icon: Wind },
-                { label: 'Temperature', value: `${vitals?.temperature || '--'} °C`, range: '36.1-37.2 °C', icon: Thermometer },
-                { label: 'SpO2', value: `${vitals?.oxygenLevel || '--'}%`, range: '95-100%', icon: Activity },
-                { label: 'Stress Level', value: `${vitals?.stressLevel || '--'}%`, range: '< 40%', icon: Brain },
-              ].map((vital, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <vital.icon className="w-4 h-4 text-text-light" />
-                    <span className="text-sm text-text-light">{vital.label}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-semibold text-white">{vital.value}</span>
-                    <span className="text-xs text-text-light ml-2">({vital.range})</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Symptom summary */}
           <div className="glass rounded-xl p-5">
