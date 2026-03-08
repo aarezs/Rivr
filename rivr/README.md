@@ -98,4 +98,4 @@ npm run dev
 
 ## Team
 
-Built with care at Hack the North / UW Hackathon 2026.
+Built at Hack Canada 2026.
