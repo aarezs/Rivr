@@ -6,7 +6,7 @@ import en from './en.json';
 import fr from './fr.json';
 import zh from './zh.json';
 import ar from './ar.json';
-import pa from './pa.json';
+import hi from './hi.json';
 import es from './es.json';
 
 i18n
@@ -18,7 +18,7 @@ i18n
       fr: { translation: fr },
       zh: { translation: zh },
       ar: { translation: ar },
-      pa: { translation: pa },
+      hi: { translation: hi },
       es: { translation: es },
     },
     fallbackLng: 'en',
@@ -38,6 +38,6 @@ export const languages = [
   { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
   { code: 'zh', name: 'Mandarin', nativeName: '中文', flag: '🇨🇳' },
   { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦' },
-  { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
   { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
 ];

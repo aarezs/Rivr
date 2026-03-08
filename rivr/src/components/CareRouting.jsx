@@ -102,7 +102,7 @@ export default function CareRouting({
   }, [careLevel, isER]);
 
   // === FULLSCREEN TRIAGE REPORT (ER) ===
-  if (step === "report" && (isER || assessment?.ctasLevel <= 3)) {
+  if (step === "report" && isER) {
     return (
       <TriageReport
         transcript={transcript}

@@ -13,6 +13,7 @@ export default function VoiceInterview({ language, onComplete }) {
   const messagesEndRef = useRef(null);
   const messagesRef = useRef([]);
   const completedRef = useRef(false);
+  const isFirstMessageRef = useRef(true);
 
   // Keep a ref in sync so the disconnect callback reads latest messages
   useEffect(() => {
@@ -53,23 +54,36 @@ export default function VoiceInterview({ language, onComplete }) {
     onMessage: (message) => {
       console.log('[ElevenLabs] Message:', message);
       if (message.source === 'ai') {
+        // Skip counting the first greeting message
+        const isGreeting = isFirstMessageRef.current;
+        isFirstMessageRef.current = false;
+
         addMessage('ai', message.message);
-        
-        // Auto-end interview if AI indicates it's done (fallback for agents without end-call tools)
-        // Only trigger after at least 6 messages (3 exchanges) to prevent premature ending
-        const totalMessages = messagesRef.current.length + 1; // +1 for this message
-        if (totalMessages >= 6) {
-          const text = message.message.toLowerCase();
-          if (
-            text.includes('please hold while') ||
-            text.includes('just finalizing') ||
-            text.includes('enough to make an assessment') ||
-            text.includes('i have enough information') ||
-            (text.includes('thank you') && text.includes('i recommend'))
-          ) {
+
+        if (!isGreeting) {
+          // Auto-end interview if AI indicates it's done (fallback for agents without end-call tools)
+          // Only trigger after at least 6 messages (3 exchanges) to prevent premature ending
+          const totalMessages = messagesRef.current.length + 1; // +1 for this message
+          if (totalMessages >= 6) {
+            const text = message.message.toLowerCase();
+            if (
+              text.includes('please hold while') ||
+              text.includes('just finalizing') ||
+              text.includes('enough to make an assessment') ||
+              text.includes('i have enough information') ||
+              (text.includes('thank you') && text.includes('i recommend'))
+            ) {
+              setTimeout(() => {
+                endInterview();
+              }, 4000); // Give the agent time to finish speaking
+            }
+          }
+
+          // Hard cap: force-end after 8 non-greeting messages regardless of phrasing
+          if (messagesRef.current.length + 1 >= 8) {
             setTimeout(() => {
               endInterview();
-            }, 4000); // Give the agent time to finish speaking
+            }, 4000);
           }
         }
       } else if (message.source === 'user') {
@@ -113,6 +127,7 @@ export default function VoiceInterview({ language, onComplete }) {
     const transcript = messagesRef.current.length > 0
       ? buildTranscript(messagesRef.current)
       : getMockTranscript();
+    await new Promise(resolve => setTimeout(resolve, 5000));
     try {
       await conversation.endSession();
     } catch {
@@ -251,15 +266,13 @@ export default function VoiceInterview({ language, onComplete }) {
                 }
               </div>
               {/* End interview button */}
-              {isConnected && messages.length >= 2 && (
-                <button
-                  onClick={endInterview}
-                  className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 font-medium
-                    transition-all duration-300 border border-white/10 cursor-pointer self-center"
-                >
-                  End Interview
-                </button>
-              )}
+              <button
+                onClick={endInterview}
+                className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 font-medium
+                  transition-all duration-300 border border-white/10 cursor-pointer self-center"
+              >
+                End Interview
+              </button>
             </div>
           </div>
         </>

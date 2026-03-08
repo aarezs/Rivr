@@ -7,9 +7,7 @@
 
 // In dev, requests are proxied through Vite to avoid CORS.
 // In production, you'd use your own backend or a CORS-friendly endpoint.
-const BACKBOARD_URL = import.meta.env.DEV
-  ? '/api/backboard'
-  : 'https://app.backboard.io/api';
+const BACKBOARD_URL = '/api/backboard';
 
 // NOTE: All curly braces in JSON examples are escaped with {{ }} because
 // Backboard uses LangChain prompt templates that treat { } as variables.
@@ -61,12 +59,14 @@ If the extracted data contains ANY of these life-threatening red flags, you MUST
 - Loss of consciousness, fainting, or syncope
 - Suicidal ideation or self-harm
 
-CTAS Scale:
-- CTAS 1 (Resuscitation): Immediate life-threatening — recommend "er"
-- CTAS 2 (Emergent): Potential threat to life/limb — recommend "er"
-- CTAS 3 (Urgent): Serious, needs emergency care — recommend "er" or "walkin"
-- CTAS 4 (Less Urgent): Needs care within 24-48h — recommend "walkin" or "pharmacy"
-- CTAS 5 (Non-Urgent): Self-care or pharmacy — recommend "selfcare" or "pharmacy"
+CTAS Scale — use these examples to calibrate your assessment:
+- CTAS 1 (Resuscitation): Cardiac arrest, not breathing, unresponsive — recommend "er"
+- CTAS 2 (Emergent): Active chest pain, stroke symptoms, severe allergic reaction, major trauma, severe difficulty breathing — recommend "er"
+- CTAS 3 (Urgent): High fever with severe symptoms, moderate difficulty breathing, significant abdominal pain, head injury with vomiting, suspected fracture — recommend "er" or "walkin"
+- CTAS 4 (Less Urgent): Sore throat, ear pain, UTI symptoms, mild sprains, skin rash, vomiting without dehydration, cough with mucus, low-grade fever — recommend "walkin" or "pharmacy"
+- CTAS 5 (Non-Urgent): Common cold, mild headache, minor cuts, insect bites, congestion, general fatigue — recommend "selfcare" or "pharmacy"
+
+Do NOT assign CTAS 3 or higher for common infections (sore throat, ear infections, sinus infections, cough) unless accompanied by a confirmed red flag symptom above. When in doubt between two levels, choose the less urgent one if no red flags are present.
 
 You MUST respond with ONLY valid JSON — no markdown, no explanation, no wrapping.
 The JSON schema is:
@@ -92,7 +92,14 @@ async function backboard(path, apiKey, body = {}) {
     body: JSON.stringify(body),
   });
 
-  const data = await res.json();
+  let data;
+  const text = await res.text();
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error('[Backboard] Non-JSON response:', text.slice(0, 500));
+    throw new Error(`Backboard API returned non-JSON response (${res.status}): ${text.slice(0, 200)}`);
+  }
 
   if (!res.ok) {
     const msg = data.detail || data.error?.message || data.message || `Backboard API returned ${res.status}`;
@@ -124,13 +131,42 @@ async function ask(assistantId, content, apiKey) {
     memory: 'Auto',
   });
 
-  return response.content;
+  // Backboard may return content as a string, array of content blocks, or nested object
+  const raw = response.content;
+  if (typeof raw === 'string') return raw;
+  if (Array.isArray(raw)) {
+    // Handle array of content blocks like [{type: "text", text: "..."}]
+    const textBlock = raw.find(b => b.type === 'text') || raw[0];
+    return textBlock?.text || textBlock?.content || JSON.stringify(textBlock);
+  }
+  if (raw && typeof raw === 'object') {
+    return raw.text || raw.content || raw.message || JSON.stringify(raw);
+  }
+  // Fallback: try the full response object
+  const fallback = response.text || response.message || response.output || response.result;
+  if (fallback) return typeof fallback === 'string' ? fallback : JSON.stringify(fallback);
+  // Last resort: stringify whatever we got
+  console.warn('[Backboard] Unexpected response shape:', response);
+  return JSON.stringify(response);
 }
 
 // ── Parsing & validation ──
 
 function parseJSON(text) {
-  const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+  // If already an object (pre-parsed), return directly
+  if (typeof text === 'object' && text !== null) return text;
+
+  let cleaned = String(text).trim();
+  // Strip markdown code fences
+  cleaned = cleaned.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  // Strip any leading/trailing non-JSON text (find first { or [)
+  const jsonStart = cleaned.search(/[{\[]/);
+  const jsonEndBrace = cleaned.lastIndexOf('}');
+  const jsonEndBracket = cleaned.lastIndexOf(']');
+  const jsonEnd = Math.max(jsonEndBrace, jsonEndBracket);
+  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd >= jsonStart) {
+    cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+  }
   try {
     return JSON.parse(cleaned);
   } catch (e) {
@@ -139,10 +175,13 @@ function parseJSON(text) {
 }
 
 function validateAssessment(assessment) {
-  const level = assessment.ctasLevel;
-  if (typeof level !== 'number' || level < 1 || level > 5) {
-    assessment.ctasLevel = Math.max(1, Math.min(5, Math.round(level) || 4));
+  // Coerce ctasLevel to number (LLM may return "3" instead of 3)
+  let level = Number(assessment.ctasLevel);
+  if (isNaN(level) || level < 1 || level > 5) {
+    level = 4; // safe default
   }
+  assessment.ctasLevel = Math.max(1, Math.min(5, Math.round(level)));
+
   const validCare = ['selfcare', 'pharmacy', 'walkin', 'er'];
   if (!validCare.includes(assessment.careRecommendation)) {
     assessment.careRecommendation = assessment.ctasLevel <= 2 ? 'er' : 'walkin';

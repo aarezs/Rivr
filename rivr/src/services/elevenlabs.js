@@ -7,7 +7,7 @@ const LANGUAGE_MAP = {
   fr: 'fr',
   zh: 'zh',
   ar: 'ar',
-  pa: 'pa',
+  hi: 'hi',
   es: 'es',
 };
 
