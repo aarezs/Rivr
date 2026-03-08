@@ -1,7 +1,13 @@
 {
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/backboard/(.*)", "destination": "/api/backboard/$1" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/api/backboard/:path*",
+      "destination": "https://app.backboard.io/api/:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ]
 }
